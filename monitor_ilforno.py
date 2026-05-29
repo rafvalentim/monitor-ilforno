@@ -60,7 +60,6 @@ def buscar_disponibilidade():
 
 def extrair_vagas(payload):
     """Retorna lista de strings com as datas disponiveis. [] = esgotado."""
-    return ["TESTE - se chegou isso, ta funcionando! (remover esta linha)"]
     dates = (payload or {}).get("data", {}).get("dates", []) or []
     vagas = []
     for d in dates:
