@@ -1,0 +1,42 @@
+# .github/workflows/monitor.yml
+# Roda o monitor a cada ~5 min na nuvem (sem precisar do seu PC ligado).
+# Coloque o script monitor_ilforno.py na raiz do repo.
+name: monitor-ilforno
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # a cada 5 min (minimo do GitHub; pode atrasar um pouco)
+  workflow_dispatch:         # permite rodar manualmente no botao "Run workflow"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      # Restaura o ultimo_estado.json da execucao anterior (dedup de avisos)
+      - name: Restaurar estado
+        uses: actions/cache/restore@v4
+        with:
+          path: ultimo_estado.json
+          key: estado-${{ github.run_id }}
+          restore-keys: estado-
+
+      - name: Checar vagas
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python monitor_ilforno.py --once
+
+      # Salva o estado pra proxima execucao
+      - name: Salvar estado
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ultimo_estado.json
+          key: estado-${{ github.run_id }}
